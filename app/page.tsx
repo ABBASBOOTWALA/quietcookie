@@ -7,7 +7,9 @@ import SearchSection from '@/components/SearchSection';
 import LoadingState from '@/components/LoadingState';
 import RecipeCard from '@/components/RecipeCard';
 import GroceryPanel from '@/components/GroceryPanel';
-import { Recipe, AppState, DietaryFilter } from '@/lib/types';
+import ChefSection from '@/components/ChefSection';
+import { Recipe, AppState, DietaryFilter, ChefAttribution } from '@/lib/types';
+import type { Chef } from '@/lib/chefs-data';
 
 export default function Home() {
   const [dish, setDish] = useState('');
@@ -18,6 +20,7 @@ export default function Home() {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [error, setError] = useState('');
   const [adjustedServings, setAdjustedServings] = useState(4);
+  const [activeChef, setActiveChef] = useState<ChefAttribution | null>(null);
   const sseAccum = useRef('');
 
   function toggleFilter(f: DietaryFilter) {
@@ -61,9 +64,7 @@ export default function Home() {
     }
   }
 
-  async function generate() {
-    if (!dish.trim() || appState === 'generating') return;
-
+  async function streamFrom(url: string, body: object) {
     setAppState('generating');
     setStreamText('');
     setRecipe(null);
@@ -71,14 +72,10 @@ export default function Home() {
     sseAccum.current = '';
 
     try {
-      const res = await fetch('/api/recipe', {
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          dish: dish.trim(),
-          servings,
-          dietary_filters: Array.from(filters),
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok || !res.body) {
@@ -98,6 +95,26 @@ export default function Home() {
       setError(e instanceof Error ? e.message : 'Connection error. Please try again.');
       setAppState('error');
     }
+  }
+
+  function generate() {
+    if (!dish.trim() || appState === 'generating') return;
+    setActiveChef(null);
+    streamFrom('/api/recipe', { dish: dish.trim(), servings, dietary_filters: Array.from(filters) });
+  }
+
+  function generateChefRecipe(chef: Chef, dishName: string) {
+    if (appState === 'generating') return;
+    setDish(dishName);
+    setActiveChef({
+      id: chef.id,
+      name: chef.name,
+      title: chef.title,
+      nationality: chef.nationality,
+      gradient: chef.gradient,
+      handle: chef.handle,
+    });
+    streamFrom('/api/chef-recipe', { dish: dishName, chefId: chef.id, servings, dietary_filters: [] });
   }
 
   return (
@@ -146,23 +163,16 @@ export default function Home() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="flex flex-col items-center gap-6 py-16 text-center"
             >
-              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-white/[0.06] bg-white/[0.03] text-4xl">
-                🍽️
-              </div>
-              <div>
-                <p className="text-lg font-semibold text-white/30">Your kitchen awaits</p>
-                <p className="mt-1 text-sm text-white/20">Enter a dish above and hit Generate</p>
-              </div>
               {/* Feature pills */}
-              <div className="flex flex-wrap justify-center gap-2 pt-2">
+              <div className="mb-6 flex flex-wrap justify-center gap-2">
                 {['Full recipe', 'Grocery list', 'Cost estimate', 'Dietary filters', 'Servings adjuster'].map(f => (
                   <span key={f} className="rounded-full border border-white/[0.05] bg-white/[0.03] px-3 py-1 text-xs text-white/25">
                     {f}
                   </span>
                 ))}
               </div>
+              <ChefSection onSelectDish={generateChefRecipe} />
             </motion.div>
           )}
 
@@ -209,7 +219,7 @@ export default function Home() {
                   </span>
                 </div>
                 <button
-                  onClick={() => { setAppState('idle'); setRecipe(null); }}
+                  onClick={() => { setAppState('idle'); setRecipe(null); setActiveChef(null); }}
                   className="text-xs text-white/25 hover:text-white/50 transition-colors"
                 >
                   New recipe →
@@ -218,7 +228,7 @@ export default function Home() {
 
               {/* Two-column results */}
               <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                <RecipeCard recipe={recipe} adjustedServings={adjustedServings} />
+                <RecipeCard recipe={recipe} adjustedServings={adjustedServings} chef={activeChef ?? undefined} />
                 <GroceryPanel
                   recipe={recipe}
                   adjustedServings={adjustedServings}

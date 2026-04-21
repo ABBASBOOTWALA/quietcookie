@@ -22,3 +22,12 @@ export interface Recipe {
 }
 
 export type AppState = 'idle' | 'generating' | 'done' | 'error';
+
+export interface ChefAttribution {
+  id: string;
+  name: string;
+  title: string;
+  nationality: string;
+  gradient: string;
+  handle?: string;
+}

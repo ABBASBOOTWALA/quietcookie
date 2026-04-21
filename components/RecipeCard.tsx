@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { Clock, Flame, ChefHat, DollarSign } from 'lucide-react';
-import { Recipe } from '@/lib/types';
+import { Recipe, ChefAttribution } from '@/lib/types';
 
 const difficultyColor = {
   Easy: 'text-green-400 bg-green-400/10 border-green-400/20',
@@ -13,6 +13,7 @@ const difficultyColor = {
 interface Props {
   recipe: Recipe;
   adjustedServings: number;
+  chef?: ChefAttribution;
 }
 
 const container = {
@@ -25,7 +26,7 @@ const item = {
   show: { opacity: 1, x: 0, transition: { ease: 'easeOut' as const } },
 };
 
-export default function RecipeCard({ recipe, adjustedServings }: Props) {
+export default function RecipeCard({ recipe, adjustedServings, chef }: Props) {
   const costPerServing = (recipe.total_estimated_cost_usd / recipe.servings).toFixed(2);
   const scaledCostPerServing = (
     (recipe.total_estimated_cost_usd / recipe.servings) * (adjustedServings / recipe.servings) * recipe.servings / adjustedServings
@@ -38,6 +39,23 @@ export default function RecipeCard({ recipe, adjustedServings }: Props) {
       transition={{ duration: 0.5, ease: 'easeOut' as const }}
       className="flex flex-col gap-6 rounded-2xl border border-white/[0.07] bg-white/[0.03] p-6 lg:p-8"
     >
+      {/* Chef attribution */}
+      {chef && (
+        <div className={`-mx-6 -mt-6 lg:-mx-8 lg:-mt-8 mb-0 px-6 py-3 lg:px-8 rounded-t-2xl bg-gradient-to-r ${chef.gradient} bg-opacity-10`}
+          style={{ background: 'rgba(255,255,255,0.025)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="flex items-center gap-2.5">
+            <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${chef.gradient} text-xs font-black text-white`}>
+              {chef.name.split(' ').slice(0, 2).map(w => w[0]).join('')}
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-white/75">{chef.name}</p>
+              <p className="text-[10px] text-white/35">{chef.title} · {chef.nationality}</p>
+            </div>
+            <span className="ml-auto text-[10px] text-white/20 italic">in their style</span>
+          </div>
+        </div>
+      )}
+
       {/* Dish name */}
       <div>
         <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-white/25">Recipe</p>
