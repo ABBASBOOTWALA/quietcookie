@@ -2,6 +2,9 @@ import Anthropic from '@anthropic-ai/sdk';
 import { CHEFS } from '@/lib/chefs-data';
 import { buildUserPrompt } from '@/lib/prompt';
 
+export const runtime = 'edge';
+export const maxDuration = 60;
+
 const SCHEMA_RULES = `
 Your task is to generate a complete recipe in your distinctive culinary style. Respond with ONLY a single valid JSON object — no preamble, no explanation, no markdown fences. Directly parseable by JSON.parse().
 

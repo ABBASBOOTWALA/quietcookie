@@ -1,6 +1,9 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { SYSTEM_PROMPT, buildUserPrompt } from '@/lib/prompt';
 
+export const runtime = 'edge';
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
   const body = await request.json();
