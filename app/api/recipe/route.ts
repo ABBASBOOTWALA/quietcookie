@@ -1,9 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { SYSTEM_PROMPT, buildUserPrompt } from '@/lib/prompt';
 
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
-
 export async function POST(request: Request) {
+  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
   const body = await request.json();
   const { dish, servings = 4, dietary_filters = [] } = body as {
     dish: string;
