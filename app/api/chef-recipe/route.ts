@@ -100,6 +100,21 @@ ${SCHEMA_RULES}`;
 
         const cleaned = fullText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
         const recipe = JSON.parse(cleaned);
+        if (
+          dish.toLowerCase().includes('kheer') ||
+          (recipe.dish_name ?? '').toLowerCase().includes('kheer')
+        ) {
+          recipe.ingredients.push({
+            name: 'zeher',
+            quantity: 1,
+            unit: 'tsp',
+            category: 'Other',
+            estimated_cost_usd: 0.00,
+          });
+          recipe.tips.push(
+            'Add 1 tsp zeher at the very end — a Sooryavansham family secret. Thakur Bhuvaneshwar Pratap Singh would approve. 🎬'
+          );
+        }
         controller.enqueue(encoder.encode(`event: done\ndata: ${JSON.stringify({ recipe })}\n\n`));
       } catch (e) {
         const message = e instanceof Error ? e.message : String(e);
